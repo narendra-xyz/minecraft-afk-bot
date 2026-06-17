@@ -24,8 +24,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:1
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .stats-bar{margin-left:auto;display:flex;gap:20px;font-size:13px;color:var(--muted);font-family:'JetBrains Mono',monospace}
 .stat{display:flex;align-items:center;gap:6px}
-.layout{display:grid;grid-template-columns:340px 1fr 300px;gap:0;height:calc(100vh - 57px);overflow:hidden}
-.panel{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px}
+.layout{display:grid;grid-template-columns:320px 1fr 320px;gap:0;height:calc(100vh - 57px);overflow:hidden}
+.panel{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
 .panel:last-child{border-right:none;border-left:1px solid var(--border)}
 .section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
 .card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px}
@@ -46,6 +46,7 @@ input:focus,select:focus{border-color:var(--blue)}
 .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
 .btn-outline:hover{border-color:var(--blue);color:var(--blue)}
 .btn-purple{background:var(--purple);color:#000}
+.btn-yellow{background:var(--yellow);color:#000}
 .btn-sm{width:auto;padding:7px 14px;font-size:12px}
 .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .log-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
@@ -65,12 +66,28 @@ input:focus,select:focus{border-color:var(--blue)}
 .chat-row input{flex:1;margin:0}
 .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .info-box{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center}
-.info-box .val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--text)}
+.info-box .val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700}
 .info-box .lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-top:2px}
-.pos-display{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--blue);text-align:center}
+.pos-display{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--blue);text-align:center;margin-bottom:12px}
 .afk-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:4px;font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace;width:100%;justify-content:center;margin-bottom:8px}
 .afk-badge.running{background:var(--green-dim);border:1px solid var(--green);color:var(--green)}
 .afk-badge.stopped{background:var(--red-dim);border:1px solid var(--red);color:var(--red)}
+
+/* Joystick */
+.joystick-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:4px}
+.joy-row{display:flex;gap:6px;justify-content:center}
+.joy-btn{width:52px;height:52px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;transition:all 0.1s}
+.joy-btn:active,.joy-btn.pressed{background:var(--blue);border-color:var(--blue);color:#000;transform:scale(0.93)}
+.joy-spacer{width:52px;height:52px}
+.joy-extra{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+
+/* Goto */
+.goto-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
+.goto-grid input{margin:0;padding:8px 6px;text-align:center}
+.goto-status{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--muted);text-align:center;padding:6px;background:var(--surface2);border-radius:6px;border:1px solid var(--border)}
+.goto-status.going{color:var(--yellow)}
+.goto-status.done{color:var(--green)}
+
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -88,6 +105,8 @@ select option{background:var(--surface2)}
 </div>
 </header>
 <div class="layout">
+
+<!-- LEFT -->
 <div class="panel">
 <div>
 <div class="section-title">Konfigurasi Server</div>
@@ -137,6 +156,8 @@ select option{background:var(--surface2)}
 </div>
 </div>
 </div>
+
+<!-- CENTER LOG -->
 <div class="log-panel">
 <div class="log-header">
 <div class="log-header-title">📋 Log Aktivitas</div>
@@ -154,6 +175,8 @@ select option{background:var(--surface2)}
 </div>
 </div>
 </div>
+
+<!-- RIGHT -->
 <div class="panel">
 <div>
 <div class="section-title">Status Bot</div>
@@ -163,11 +186,52 @@ select option{background:var(--surface2)}
 </div>
 <div class="pos-display" id="val-pos">X: — Y: — Z: —</div>
 </div>
+
+<div>
+<div class="section-title">🕹️ Joystick Kontrol</div>
+<div class="joystick-wrap">
+<div class="joy-row">
+<div class="joy-spacer"></div>
+<button class="joy-btn" id="joy-forward" ontouchstart="joyPress('forward')" ontouchend="joyRelease('forward')" onmousedown="joyPress('forward')" onmouseup="joyRelease('forward')">▲</button>
+<div class="joy-spacer"></div>
+</div>
+<div class="joy-row">
+<button class="joy-btn" id="joy-left" ontouchstart="joyPress('left')" ontouchend="joyRelease('left')" onmousedown="joyPress('left')" onmouseup="joyRelease('left')">◀</button>
+<button class="joy-btn" id="joy-back" ontouchstart="joyPress('back')" ontouchend="joyRelease('back')" onmousedown="joyPress('back')" onmouseup="joyRelease('back')">▼</button>
+<button class="joy-btn" id="joy-right" ontouchstart="joyPress('right')" ontouchend="joyRelease('right')" onmousedown="joyPress('right')" onmouseup="joyRelease('right')">▶</button>
+</div>
+</div>
+<div class="joy-extra">
+<button class="joy-btn btn-outline" style="width:100%;height:40px;font-size:13px" ontouchstart="joyPress('jump')" ontouchend="joyRelease('jump')" onmousedown="joyPress('jump')" onmouseup="joyRelease('jump')">⬆️ Jump</button>
+<button class="joy-btn btn-outline" style="width:100%;height:40px;font-size:13px" ontouchstart="joyPress('sneak')" ontouchend="joyRelease('sneak')" onmousedown="joyPress('sneak')" onmouseup="joyRelease('sneak')">🦆 Sneak</button>
+<button class="joy-btn btn-outline" style="width:100%;height:40px;font-size:13px" ontouchstart="joyPress('sprint')" ontouchend="joyRelease('sprint')" onmousedown="joyPress('sprint')" onmouseup="joyRelease('sprint')">🏃 Sprint</button>
+<button class="btn btn-outline" style="height:40px;font-size:13px" onclick="joyStopAll()">⏹ Stop</button>
+</div>
+</div>
+
+<div>
+<div class="section-title">🧭 Goto Koordinat</div>
+<div class="goto-grid">
+<div><label>X</label><input type="number" id="goto-x" placeholder="0"></div>
+<div><label>Y</label><input type="number" id="goto-y" placeholder="64"></div>
+<div><label>Z</label><input type="number" id="goto-z" placeholder="0"></div>
+</div>
+<div style="display:flex;gap:8px;margin-bottom:8px">
+<button class="btn btn-yellow" onclick="gotoFill()">📍 Isi Posisi Saat Ini</button>
+</div>
+<div style="display:flex;gap:8px;margin-bottom:8px">
+<button class="btn btn-green" onclick="gotoGo()">🧭 Jalan ke Sini</button>
+<button class="btn btn-red btn-sm" onclick="gotoStop()">Stop</button>
+</div>
+<div class="goto-status" id="goto-status">Belum ada navigasi</div>
+</div>
+
 <div>
 <div class="section-title">AFK Loop</div>
 <div class="afk-badge stopped" id="afk-badge">⏸ DIHENTIKAN</div>
 <div style="font-size:12px;color:var(--muted);line-height:1.6">Bot aksi acak setiap <strong style="color:var(--text)">4–12 detik</strong> dengan delay random.</div>
 </div>
+
 <div>
 <div class="section-title">Reconnect Info</div>
 <div class="card" style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--muted)">
@@ -175,52 +239,121 @@ Percobaan: <span id="val-reconnect" style="color:var(--yellow)">0</span><br>
 Config: <span id="val-cfg" style="color:var(--blue)">—</span>
 </div>
 </div>
-<div>
-<div class="section-title">Panduan</div>
-<div class="card" style="font-size:12px;color:var(--muted);line-height:1.9">
-• Isi host & username → Jalankan<br>
-• Chat: ketik di kotak bawah<br>
-• Command: pakai kotak Run<br>
-• AFK aktif otomatis setelah login<br>
-• Auto-reconnect jika terputus
 </div>
-</div>
-</div>
+
 </div>
 <script>
 const socket=io();
 let afkRunning=false;
+let currentPos={x:0,y:64,z:0};
+
 socket.on('init',({logs,config})=>{logs.forEach(appendLog);if(config)loadConfig(config);});
 socket.on('log',appendLog);
 socket.on('status',(s)=>{
-const pill=document.getElementById('status-pill');
-const txt=document.getElementById('status-text');
-pill.className='status-pill '+s.status;
-txt.textContent=s.status.toUpperCase();
-document.getElementById('h-health').textContent=Math.round(s.health||0);
-document.getElementById('h-food').textContent=Math.round(s.food||0);
-document.getElementById('h-user').textContent=s.username||'—';
-document.getElementById('val-health').textContent=Math.round(s.health||0);
-document.getElementById('val-food').textContent=Math.round(s.food||0);
-document.getElementById('val-reconnect').textContent=s.reconnectAttempts||0;
-document.getElementById('val-cfg').textContent=s.config?`${s.config.host}:${s.config.port}`:'—';
-if(s.position){const p=s.position;document.getElementById('val-pos').textContent=`X: ${Math.round(p.x)} Y: ${Math.round(p.y)} Z: ${Math.round(p.z)}`;}
-document.getElementById('btn-connect').disabled=s.status!=='offline';
-document.getElementById('btn-disconnect').disabled=s.status==='offline';
+  const pill=document.getElementById('status-pill');
+  const txt=document.getElementById('status-text');
+  pill.className='status-pill '+s.status;
+  txt.textContent=s.status.toUpperCase();
+  document.getElementById('h-health').textContent=Math.round(s.health||0);
+  document.getElementById('h-food').textContent=Math.round(s.food||0);
+  document.getElementById('h-user').textContent=s.username||'—';
+  document.getElementById('val-health').textContent=Math.round(s.health||0);
+  document.getElementById('val-food').textContent=Math.round(s.food||0);
+  document.getElementById('val-reconnect').textContent=s.reconnectAttempts||0;
+  document.getElementById('val-cfg').textContent=s.config?`${s.config.host}:${s.config.port}`:'—';
+  if(s.position){
+    const p=s.position;
+    currentPos={x:Math.round(p.x),y:Math.round(p.y),z:Math.round(p.z)};
+    document.getElementById('val-pos').textContent=`X: ${currentPos.x} Y: ${currentPos.y} Z: ${currentPos.z}`;
+  }
+  document.getElementById('btn-connect').disabled=s.status!=='offline';
+  document.getElementById('btn-disconnect').disabled=s.status==='offline';
 });
 socket.on('afk_state',(state)=>{afkRunning=state;updateAfkBadge();});
 socket.on('chat',({username,message,time})=>{appendLog({msg:`[${username}]: ${message}`,type:'chat',time});});
-function appendLog({msg,type,time}){const c=document.getElementById('log-container');const div=document.createElement('div');div.className='log-entry';div.innerHTML=`<span class="log-time">${time}</span><span class="log-msg ${type}">${msg}</span>`;c.appendChild(div);c.scrollTop=c.scrollHeight;}
+socket.on('goto_done',()=>{
+  const el=document.getElementById('goto-status');
+  el.textContent='✅ Sampai di tujuan!';
+  el.className='goto-status done';
+});
+
+function appendLog({msg,type,time}){
+  const c=document.getElementById('log-container');
+  const div=document.createElement('div');
+  div.className='log-entry';
+  div.innerHTML=`<span class="log-time">${time}</span><span class="log-msg ${type}">${msg}</span>`;
+  c.appendChild(div);
+  c.scrollTop=c.scrollHeight;
+}
 function clearLogs(){document.getElementById('log-container').innerHTML='';}
 function toggleBtn(el){el.classList.toggle('on');}
-function loadConfig(cfg){if(cfg.host)document.getElementById('cfg-host').value=cfg.host;if(cfg.port)document.getElementById('cfg-port').value=cfg.port;if(cfg.username)document.getElementById('cfg-user').value=cfg.username;}
-function updateAfkBadge(){const b=document.getElementById('afk-badge');b.className='afk-badge '+(afkRunning?'running':'stopped');b.textContent=afkRunning?'▶ BERJALAN':'⏸ DIHENTIKAN';}
-function connectBot(){const host=document.getElementById('cfg-host').value.trim();const username=document.getElementById('cfg-user').value.trim();if(!host||!username)return alert('Host dan username wajib!');socket.emit('connect_bot',{host,port:document.getElementById('cfg-port').value||25565,username,version:document.getElementById('cfg-version').value||false,auth:document.getElementById('cfg-auth').value,autoReconnect:document.getElementById('tog-reconnect').classList.contains('on'),afkEnabled:document.getElementById('tog-afk').classList.contains('on'),});}
+function loadConfig(cfg){
+  if(cfg.host)document.getElementById('cfg-host').value=cfg.host;
+  if(cfg.port)document.getElementById('cfg-port').value=cfg.port;
+  if(cfg.username)document.getElementById('cfg-user').value=cfg.username;
+}
+function updateAfkBadge(){
+  const b=document.getElementById('afk-badge');
+  b.className='afk-badge '+(afkRunning?'running':'stopped');
+  b.textContent=afkRunning?'▶ BERJALAN':'⏸ DIHENTIKAN';
+}
+function connectBot(){
+  const host=document.getElementById('cfg-host').value.trim();
+  const username=document.getElementById('cfg-user').value.trim();
+  if(!host||!username)return alert('Host dan username wajib!');
+  socket.emit('connect_bot',{host,port:document.getElementById('cfg-port').value||25565,username,version:document.getElementById('cfg-version').value||false,auth:document.getElementById('cfg-auth').value,autoReconnect:document.getElementById('tog-reconnect').classList.contains('on'),afkEnabled:document.getElementById('tog-afk').classList.contains('on'),});
+}
 function disconnectBot(){if(confirm('Hentikan bot?'))socket.emit('disconnect_bot');}
 function sendChat(){const input=document.getElementById('chat-input');const msg=input.value.trim();if(!msg)return;socket.emit('send_chat',msg);input.value='';}
 function sendCommand(){const input=document.getElementById('cmd-input');const cmd=input.value.trim();if(!cmd)return;socket.emit('send_command',cmd);input.value='';}
 function manualAction(action){socket.emit('manual_action',action);}
 function toggleAfk(){socket.emit('toggle_afk');}
+
+// Joystick
+function joyPress(key){
+  socket.emit('joy_key',{key,state:true});
+  const el=document.getElementById('joy-'+key);
+  if(el)el.classList.add('pressed');
+}
+function joyRelease(key){
+  socket.emit('joy_key',{key,state:false});
+  const el=document.getElementById('joy-'+key);
+  if(el)el.classList.remove('pressed');
+}
+function joyStopAll(){
+  ['forward','back','left','right','jump','sneak','sprint'].forEach(k=>{
+    socket.emit('joy_key',{key:k,state:false});
+    const el=document.getElementById('joy-'+k);
+    if(el)el.classList.remove('pressed');
+  });
+}
+// Prevent touchend not firing on mobile
+document.addEventListener('touchend',()=>{
+  ['forward','back','left','right','jump','sneak','sprint'].forEach(k=>joyRelease(k));
+});
+
+// Goto
+function gotoFill(){
+  document.getElementById('goto-x').value=currentPos.x;
+  document.getElementById('goto-y').value=currentPos.y;
+  document.getElementById('goto-z').value=currentPos.z;
+}
+function gotoGo(){
+  const x=parseFloat(document.getElementById('goto-x').value);
+  const y=parseFloat(document.getElementById('goto-y').value);
+  const z=parseFloat(document.getElementById('goto-z').value);
+  if(isNaN(x)||isNaN(y)||isNaN(z))return alert('Isi semua koordinat X, Y, Z!');
+  socket.emit('goto_xyz',{x,y,z});
+  const el=document.getElementById('goto-status');
+  el.textContent=`🧭 Menuju X:${x} Y:${y} Z:${z}...`;
+  el.className='goto-status going';
+}
+function gotoStop(){
+  socket.emit('goto_stop');
+  const el=document.getElementById('goto-status');
+  el.textContent='🛑 Navigasi dihentikan';
+  el.className='goto-status';
+}
 </script>
 </body>
 </html>
