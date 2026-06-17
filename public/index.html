@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MC AFK Bot Panel</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+:root{--bg:#0d1117;--surface:#161b22;--surface2:#1c2333;--border:#30363d;--green:#3fb950;--green-dim:#1a3a22;--red:#f85149;--red-dim:#3a1a1a;--yellow:#d29922;--blue:#58a6ff;--purple:#bc8cff;--text:#e6edf3;--muted:#8b949e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:grid;grid-template-rows:auto 1fr}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:16px}
+.logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;color:var(--green)}
+.logo span{color:var(--muted)}
+.status-pill{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace;text-transform:uppercase;background:var(--surface2);border:1px solid var(--border);transition:all 0.3s}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background 0.3s}
+.status-pill.online{border-color:var(--green);color:var(--green)}
+.status-pill.online .dot{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+.status-pill.connecting{border-color:var(--yellow);color:var(--yellow)}
+.status-pill.connecting .dot{background:var(--yellow);animation:pulse 1s infinite}
+.status-pill.offline{border-color:var(--red);color:var(--red)}
+.status-pill.offline .dot{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.stats-bar{margin-left:auto;display:flex;gap:20px;font-size:13px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.stat{display:flex;align-items:center;gap:6px}
+.layout{display:grid;grid-template-columns:340px 1fr 300px;gap:0;height:calc(100vh - 57px);overflow:hidden}
+.panel{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px}
+.panel:last-child{border-right:none;border-left:1px solid var(--border)}
+.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
+input,select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:10px;outline:none;transition:border-color 0.2s}
+input:focus,select:focus{border-color:var(--blue)}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.toggle-label{font-size:13px;color:var(--text)}
+.toggle{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;cursor:pointer;transition:background 0.2s;border:none;outline:none}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--muted);transition:all 0.2s}
+.toggle.on{background:var(--green-dim);border:1px solid var(--green)}
+.toggle.on::after{background:var(--green);transform:translateX(16px)}
+.btn{width:100%;padding:10px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;transition:all 0.15s}
+.btn:active{transform:scale(0.98)}
+.btn-green{background:var(--green);color:#000}
+.btn-green:hover{background:#5fd97a}
+.btn-red{background:var(--red);color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue)}
+.btn-purple{background:var(--purple);color:#000}
+.btn-sm{width:auto;padding:7px 14px;font-size:12px}
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.log-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.log-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)}
+.log-header-title{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--text)}
+#log-container{flex:1;overflow-y:auto;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7}
+.log-entry{display:flex;gap:10px}
+.log-time{color:var(--muted);flex-shrink:0}
+.log-msg.info{color:var(--text)}
+.log-msg.success{color:var(--green)}
+.log-msg.error{color:var(--red)}
+.log-msg.warn{color:var(--yellow)}
+.log-msg.action{color:var(--purple)}
+.log-msg.chat{color:var(--blue)}
+.chat-input-area{border-top:1px solid var(--border);padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.chat-row{display:flex;gap:8px}
+.chat-row input{flex:1;margin:0}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.info-box{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center}
+.info-box .val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--text)}
+.info-box .lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-top:2px}
+.pos-display{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--blue);text-align:center}
+.afk-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:4px;font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace;width:100%;justify-content:center;margin-bottom:8px}
+.afk-badge.running{background:var(--green-dim);border:1px solid var(--green);color:var(--green)}
+.afk-badge.stopped{background:var(--red-dim);border:1px solid var(--red);color:var(--red)}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+select option{background:var(--surface2)}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">MC<span>_</span>AFK<span>://</span>BOT</div>
+<div class="status-pill offline" id="status-pill"><div class="dot"></div><span id="status-text">OFFLINE</span></div>
+<div class="stats-bar">
+<div class="stat"><span>❤️</span><span id="h-health">0</span></div>
+<div class="stat"><span>🍗</span><span id="h-food">0</span></div>
+<div class="stat"><span>👤</span><span id="h-user">—</span></div>
+</div>
+</header>
+<div class="layout">
+<div class="panel">
+<div>
+<div class="section-title">Konfigurasi Server</div>
+<div class="card">
+<label>Host / IP Server</label>
+<input type="text" id="cfg-host" placeholder="play.server.com">
+<label>Port</label>
+<input type="number" id="cfg-port" placeholder="25565" value="25565">
+<label>Username Bot</label>
+<input type="text" id="cfg-user" placeholder="AFKBot_123">
+<label>Versi Minecraft</label>
+<select id="cfg-version">
+<option value="">Auto Detect</option>
+<option value="1.21.4">1.21.4</option>
+<option value="1.20.4">1.20.4</option>
+<option value="1.20.1">1.20.1</option>
+<option value="1.19.4">1.19.4</option>
+<option value="1.18.2">1.18.2</option>
+<option value="1.16.5">1.16.5</option>
+<option value="1.12.2">1.12.2</option>
+<option value="1.8.9">1.8.9</option>
+</select>
+<label>Mode Autentikasi</label>
+<select id="cfg-auth">
+<option value="offline">Offline (Cracked)</option>
+<option value="microsoft">Microsoft (Premium)</option>
+</select>
+<div class="toggle-row"><span class="toggle-label">Auto Reconnect</span><button class="toggle on" id="tog-reconnect" onclick="toggleBtn(this)"></button></div>
+<div class="toggle-row"><span class="toggle-label">AFK Otomatis</span><button class="toggle on" id="tog-afk" onclick="toggleBtn(this)"></button></div>
+</div>
+</div>
+<div>
+<div class="section-title">Kontrol Bot</div>
+<button class="btn btn-green" id="btn-connect" onclick="connectBot()">▶ Jalankan Bot</button>
+<div style="height:8px"></div>
+<button class="btn btn-red" id="btn-disconnect" onclick="disconnectBot()" disabled>■ Hentikan Bot</button>
+</div>
+<div>
+<div class="section-title">Aksi Manual</div>
+<div class="action-grid">
+<button class="btn btn-outline" onclick="manualAction('jump')">⬆️ Lompat</button>
+<button class="btn btn-outline" onclick="manualAction('sneak')">🦆 Jongkok</button>
+<button class="btn btn-outline" onclick="manualAction('look_around')">👀 Lihat</button>
+<button class="btn btn-outline" onclick="manualAction('attack')">⚔️ Serang</button>
+<button class="btn btn-outline" onclick="manualAction('respawn')">♻️ Respawn</button>
+<button class="btn btn-purple btn-sm" onclick="toggleAfk()" style="width:100%">⏯ Toggle AFK</button>
+</div>
+</div>
+</div>
+<div class="log-panel">
+<div class="log-header">
+<div class="log-header-title">📋 Log Aktivitas</div>
+<button class="btn btn-outline btn-sm" onclick="clearLogs()">Hapus Log</button>
+</div>
+<div id="log-container"></div>
+<div class="chat-input-area">
+<div class="chat-row">
+<input type="text" id="chat-input" placeholder="Ketik pesan chat...">
+<button class="btn btn-green btn-sm" onclick="sendChat()">Kirim</button>
+</div>
+<div class="chat-row">
+<input type="text" id="cmd-input" placeholder="/command args...">
+<button class="btn btn-purple btn-sm" onclick="sendCommand()">Run</button>
+</div>
+</div>
+</div>
+<div class="panel">
+<div>
+<div class="section-title">Status Bot</div>
+<div class="info-grid">
+<div class="info-box"><div class="val" id="val-health" style="color:#f85149">0</div><div class="lbl">❤️ Health</div></div>
+<div class="info-box"><div class="val" id="val-food" style="color:#d29922">0</div><div class="lbl">🍗 Food</div></div>
+</div>
+<div class="pos-display" id="val-pos">X: — Y: — Z: —</div>
+</div>
+<div>
+<div class="section-title">AFK Loop</div>
+<div class="afk-badge stopped" id="afk-badge">⏸ DIHENTIKAN</div>
+<div style="font-size:12px;color:var(--muted);line-height:1.6">Bot aksi acak setiap <strong style="color:var(--text)">4–12 detik</strong> dengan delay random.</div>
+</div>
+<div>
+<div class="section-title">Reconnect Info</div>
+<div class="card" style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--muted)">
+Percobaan: <span id="val-reconnect" style="color:var(--yellow)">0</span><br>
+Config: <span id="val-cfg" style="color:var(--blue)">—</span>
+</div>
+</div>
+<div>
+<div class="section-title">Panduan</div>
+<div class="card" style="font-size:12px;color:var(--muted);line-height:1.9">
+• Isi host & username → Jalankan<br>
+• Chat: ketik di kotak bawah<br>
+• Command: pakai kotak Run<br>
+• AFK aktif otomatis setelah login<br>
+• Auto-reconnect jika terputus
+</div>
+</div>
+</div>
+</div>
+<script>
+const socket=io();
+let afkRunning=false;
+socket.on('init',({logs,config})=>{logs.forEach(appendLog);if(config)loadConfig(config);});
+socket.on('log',appendLog);
+socket.on('status',(s)=>{
+const pill=document.getElementById('status-pill');
+const txt=document.getElementById('status-text');
+pill.className='status-pill '+s.status;
+txt.textContent=s.status.toUpperCase();
+document.getElementById('h-health').textContent=Math.round(s.health||0);
+document.getElementById('h-food').textContent=Math.round(s.food||0);
+document.getElementById('h-user').textContent=s.username||'—';
+document.getElementById('val-health').textContent=Math.round(s.health||0);
+document.getElementById('val-food').textContent=Math.round(s.food||0);
+document.getElementById('val-reconnect').textContent=s.reconnectAttempts||0;
+document.getElementById('val-cfg').textContent=s.config?`${s.config.host}:${s.config.port}`:'—';
+if(s.position){const p=s.position;document.getElementById('val-pos').textContent=`X: ${Math.round(p.x)} Y: ${Math.round(p.y)} Z: ${Math.round(p.z)}`;}
+document.getElementById('btn-connect').disabled=s.status!=='offline';
+document.getElementById('btn-disconnect').disabled=s.status==='offline';
+});
+socket.on('afk_state',(state)=>{afkRunning=state;updateAfkBadge();});
+socket.on('chat',({username,message,time})=>{appendLog({msg:`[${username}]: ${message}`,type:'chat',time});});
+function appendLog({msg,type,time}){const c=document.getElementById('log-container');const div=document.createElement('div');div.className='log-entry';div.innerHTML=`<span class="log-time">${time}</span><span class="log-msg ${type}">${msg}</span>`;c.appendChild(div);c.scrollTop=c.scrollHeight;}
+function clearLogs(){document.getElementById('log-container').innerHTML='';}
+function toggleBtn(el){el.classList.toggle('on');}
+function loadConfig(cfg){if(cfg.host)document.getElementById('cfg-host').value=cfg.host;if(cfg.port)document.getElementById('cfg-port').value=cfg.port;if(cfg.username)document.getElementById('cfg-user').value=cfg.username;}
+function updateAfkBadge(){const b=document.getElementById('afk-badge');b.className='afk-badge '+(afkRunning?'running':'stopped');b.textContent=afkRunning?'▶ BERJALAN':'⏸ DIHENTIKAN';}
+function connectBot(){const host=document.getElementById('cfg-host').value.trim();const username=document.getElementById('cfg-user').value.trim();if(!host||!username)return alert('Host dan username wajib!');socket.emit('connect_bot',{host,port:document.getElementById('cfg-port').value||25565,username,version:document.getElementById('cfg-version').value||false,auth:document.getElementById('cfg-auth').value,autoReconnect:document.getElementById('tog-reconnect').classList.contains('on'),afkEnabled:document.getElementById('tog-afk').classList.contains('on'),});}
+function disconnectBot(){if(confirm('Hentikan bot?'))socket.emit('disconnect_bot');}
+function sendChat(){const input=document.getElementById('chat-input');const msg=input.value.trim();if(!msg)return;socket.emit('send_chat',msg);input.value='';}
+function sendCommand(){const input=document.getElementById('cmd-input');const cmd=input.value.trim();if(!cmd)return;socket.emit('send_command',cmd);input.value='';}
+function manualAction(action){socket.emit('manual_action',action);}
+function toggleAfk(){socket.emit('toggle_afk');}
+</script>
+</body>
+</html>
