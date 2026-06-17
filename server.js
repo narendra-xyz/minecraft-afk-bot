@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const mineflayer = require('mineflayer');
+const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 const path = require('path');
 
 const app = express();
@@ -18,6 +19,7 @@ let reconnectAttempts = 0;
 let afkInterval = null;
 let isRunning = false;
 let logs = [];
+let heldKeys = {};
 
 const MAX_LOGS = 200;
 
@@ -110,6 +112,7 @@ function stopAfk() {
 
 function destroyBot() {
   stopAfk();
+  heldKeys = {};
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
   if (bot) {
     try { bot.quit('Stopping bot'); } catch (_) {}
@@ -149,13 +152,22 @@ function createBot(config) {
     scheduleReconnect();
     return;
   }
+
+  bot.loadPlugin(pathfinder);
+
   bot.on('login', () => {
     reconnectAttempts = 0;
     addLog(`✅ Login berhasil sebagai ${bot.username}`, 'success');
     emitStatus();
     if (config.afkEnabled) { isRunning = true; runAfkLoop(); }
   });
-  bot.on('spawn', () => { addLog('🌍 Bot di-spawn', 'info'); emitStatus(); });
+  bot.on('spawn', () => {
+    addLog('🌍 Bot di-spawn', 'info');
+    const mc = require('minecraft-data')(bot.version);
+    const movements = new Movements(bot, mc);
+    bot.pathfinder.setMovements(movements);
+    emitStatus();
+  });
   bot.on('health', () => emitStatus());
   bot.on('chat', (username, message) => {
     if (username === bot.username) return;
@@ -177,12 +189,17 @@ function createBot(config) {
     stopAfk();
     setTimeout(() => { if (bot?.entity) { isRunning = true; runAfkLoop(); } }, 3000);
   });
+  bot.on('goal_reached', () => {
+    addLog('🏁 Sampai di tujuan!', 'success');
+    io.emit('goto_done');
+  });
 }
 
 io.on('connection', (socket) => {
   addLog('🖥️ Panel terhubung', 'info');
   socket.emit('init', { logs, status: getBotStatus(), config: botConfig });
   emitStatus();
+
   socket.on('connect_bot', (config) => {
     if (!config.host || !config.username) return socket.emit('error_msg', 'Host dan username wajib!');
     createBot({ ...config, autoReconnect: config.autoReconnect ?? true, afkEnabled: config.afkEnabled ?? true });
@@ -222,6 +239,41 @@ io.on('connection', (socket) => {
       case 'respawn': bot.respawn?.(); addLog('♻️ Respawn', 'action'); break;
     }
   });
+
+  // Joystick
+  socket.on('joy_key', ({ key, state }) => {
+    if (!bot?.entity) return;
+    if (state) {
+      if (!heldKeys[key]) {
+        heldKeys[key] = true;
+        bot.setControlState(key, true);
+      }
+    } else {
+      heldKeys[key] = false;
+      bot.setControlState(key, false);
+    }
+  });
+
+  // Goto XYZ
+  socket.on('goto_xyz', ({ x, y, z }) => {
+    if (!bot?.entity) return;
+    try {
+      stopAfk();
+      const { GoalBlock } = goals;
+      bot.pathfinder.setGoal(new GoalBlock(Math.round(x), Math.round(y), Math.round(z)));
+      addLog(`🧭 Menuju X:${x} Y:${y} Z:${z}`, 'action');
+    } catch (e) {
+      addLog(`❌ Goto error: ${e.message}`, 'error');
+    }
+  });
+
+  socket.on('goto_stop', () => {
+    if (!bot?.entity) return;
+    bot.pathfinder.setGoal(null);
+    stopAfk();
+    addLog('🛑 Navigasi dihentikan', 'info');
+  });
+
   socket.on('get_status', () => emitStatus());
 });
 
