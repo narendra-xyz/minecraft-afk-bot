@@ -163,7 +163,7 @@ function createBot(config) {
     io.emit('chat', { username, message, time: new Date().toLocaleTimeString('id-ID') });
   });
   bot.on('kicked', (reason) => {
-    addLog(`⛔ Di-kick: ${reason}`, 'error');
+    addLog(`⛔ Di-kick: ${JSON.stringify(reason)}`, 'error');
     stopAfk(); emitStatus(); scheduleReconnect();
   });
   bot.on('end', (reason) => {
