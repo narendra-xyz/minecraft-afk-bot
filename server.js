@@ -121,7 +121,7 @@ function destroyBot() {
 function scheduleReconnect() {
   if (!botConfig?.autoReconnect) return;
   if (reconnectTimer) clearTimeout(reconnectTimer);
-  const delay = Math.min(5000 + reconnectAttempts * 3000, 60000);
+  const delay = Math.floor(Math.random() * 9000) + 1000;
   reconnectAttempts++;
   addLog(`🔄 Reconnect #${reconnectAttempts} dalam ${delay / 1000}s...`, 'info');
   reconnectTimer = setTimeout(() => createBot(botConfig), delay);
