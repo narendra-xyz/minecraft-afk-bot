@@ -155,7 +155,14 @@ function createBot(config) {
     emitStatus();
     if (config.afkEnabled) { isRunning = true; runAfkLoop(); }
   });
-  bot.on('spawn', () => { addLog('🌍 Bot di-spawn', 'info'); emitStatus(); });
+  bot.on('spawn', () => {
+    addLog('🌍 Bot di-spawn', 'info');
+    emitStatus();
+    setTimeout(() => {
+      bot.chat('/login Pito#123');
+      addLog('🔑 Auto-login terkirim', 'action');
+    }, 1000);
+  });
   bot.on('health', () => emitStatus());
   bot.on('chat', (username, message) => {
     if (username === bot.username) return;
