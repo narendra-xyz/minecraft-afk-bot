@@ -162,6 +162,11 @@ function createBot(config) {
     addLog(`💬 [${username}]: ${message}`, 'chat');
     io.emit('chat', { username, message, time: new Date().toLocaleTimeString('id-ID') });
   });
+  bot.on('message', (jsonMsg) => {
+    const msg = jsonMsg.toString();
+    addLog(`📨 [SYSTEM]: ${msg}`, 'chat');
+    io.emit('chat', { username: 'SYSTEM', message: msg, time: new Date().toLocaleTimeString('id-ID') });
+  });
   bot.on('kicked', (reason) => {
     addLog(`⛔ Di-kick: ${JSON.stringify(reason)}`, 'error');
     stopAfk(); emitStatus(); scheduleReconnect();
