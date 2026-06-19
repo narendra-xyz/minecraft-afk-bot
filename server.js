@@ -144,6 +144,9 @@ function createBot(config) {
       hideErrors: false,
       checkTimeoutInterval: 30000,
       keepAlive: true,
+      onMsaCode: (data) => {
+        addLog(`🔑 LOGIN MICROSOFT: Buka ${data.verification_uri} lalu masukkan kode: ${data.user_code}`, 'success');
+      },
     });
   } catch (e) {
     addLog(`❌ Gagal membuat bot: ${e.message}`, 'error');
