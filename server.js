@@ -131,6 +131,7 @@ function scheduleReconnect() {
 function createBot(config) {
   if (bot) destroyBot();
   botConfig = config;
+  addLog(`🔍 DEBUG auth mode: ${config.auth}`, 'info');
   addLog(`🔌 Menghubungkan ke ${config.host}:${config.port} sebagai ${config.username}...`, 'info');
   emitStatus();
   try {
